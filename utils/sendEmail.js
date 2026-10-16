@@ -1,26 +1,30 @@
 
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from "nodemailer";
 
 const sendOTPEmail = async (email, otp) => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is missing");
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+
+  if (!emailUser || !emailPass) {
+    throw new Error("EMAIL_USER or EMAIL_PASS is missing");
   }
 
-  const { data, error } = await resend.emails.send({
-    from: "Notes App <onboarding@resend.dev>",
-    to: [email],
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: emailUser,
+      pass: emailPass,
+    },
+  });
+
+  await transporter.sendMail({
+    from: emailUser,
+    to: email,
     subject: "Email Verification OTP",
     text: `Your OTP is ${otp}. It expires in 5 minutes. Do not share it with anyone.`,
   });
-
-  if (error) {
-    console.error("Resend email error:", error);
-    throw new Error("Could not send OTP email");
-  }
-
-  return data;
 };
 
 export default sendOTPEmail;
